@@ -21,6 +21,13 @@ viewRoutes.get("/realtimeproducts", async (req, res) => {
     res.render("realtimeproducts", { title: "RealTime Products", data: resultado.rdo })
 })
 
+viewRoutes.get('/products', async (req, res) => {
+  const {page} = req.query;
+  const products = await productManager.getProducts(10, page);
+  console.log({products});
+  res.render('products', products);
+});
+
 viewRoutes.get('/chat', async (req, res)=>{
   res.render('chat')
 })

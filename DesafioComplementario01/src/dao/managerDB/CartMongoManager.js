@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CartModel from "../models/carts.models.js"
 
 export class ProductCart {
@@ -41,7 +42,7 @@ export class CartMongoManager {
   async getProductsCartById(id) {
     try
     {
-      const cart=await CartModel.findOne({_id: id})
+      const cart=await CartModel.findOne({_id: id}).populate('products.product');
       if (cart) 
         return {message: "OK" , rdo: cart.products}
       else 
@@ -54,40 +55,15 @@ export class CartMongoManager {
 
   async addProductsInCart(cId, pId, quantity) {
     try {
-      this.#carts = await this.getCarts();
-      console.log(this.#carts.rdo)
-
-      if (!this.#carts)
-        return {message: "ERROR" , rdo: `No existen carritos creados`}
-
-      const index = this.#carts.rdo.findIndex((e) => e._id.equals(cId));
-      
-      if (index===-1) 
-       return {message: "ERROR" , rdo: `No existen el carrito con el id ${cId}`}
-
-      const productsCart = this.#carts.rdo[index].products //Obtengo el array de productos
-
-      //busco el producto por el Id
-      const prod = productsCart.find(product=>product.id === pId)
-
-      //Busco el producto en el carrito, si no existe lo agrego, sino actualizo el quantity
-      if (prod) { //si ya existe el producto en el carrito
-        const indexProd = productsCart.findIndex(product=>product.id === pId)
-        productsCart[indexProd].quantity +=quantity
-      }
-      else //si no existe el producto en el carrito
-      {
-        const newProduct = { id: pId, quantity: quantity };
-        productsCart.push(newProduct)
-      }
-
-      const updated = await CartModel.findOneAndUpdate(
-        { _id: cId },
-        { products: productsCart }
-      )
-
-      return {message: "OK" , rdo: `Producto agregado/actualizado al carrito ${cId} correctamente`}
-      
+      console.log('Hola mundo!!')
+      const cart = await CartModel.updateOne({_id: cId}, {
+        products: [
+          {
+            product: pId,
+            quantity
+          }
+        ]
+      })
     } catch (e) {
       return {message: "ERROR" , rdo: "Error al momento de actualizar el carrito - "+ e.message}    }
   }
@@ -102,18 +78,70 @@ export class CartMongoManager {
     }
   }
 
-  async deleteCart(id) {
+  async deleteAllProductsInCart(id) {
     try {
-      const deleted = await CartModel.deleteOne({_id: id})
-
-      if (deleted.deletedCount === 0){
-        return {message: "ERROR" , rdo: `No se encontró el carrito con el ID ${id}. No se pudo eliminar.`}
-      }
-
-      return {message: "OK" , rdo: `Carrito con ID ${id} eliminado exitosamente.`}
+     const deleted = await CartModel.updateOne({_id: id}, {
+      products: []
+     });
+     if(deleted.modifiedCount > 0){
+      return true;
+     }
+     else{
+      return false;
+     }
     } 
     catch (e) {
-      return {message: "ERROR" , rdo: "Error al momento de eliminar el carrito - "+ e.message}
+     console.error(e);
+     return false;
+    }
+  }
+
+  async deleteProductInCart(cId, pId){
+    try {
+      const result = await CartModel.updateOne({_id: cId}, {
+        $pull: {products : {product: new mongoose.Types.ObjectId(pId)}}
+      });
+      if(result.modifiedCount > 0){
+        return true;
+      }
+      else{
+        return false;
+      }
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  async updateCart(cId, cart){
+    try {
+      const result = await CartModel.updateOne({_id: cId}, cart);
+      return result;
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+  }
+
+  async updateProductInCart(cId, pId, quantity){
+    if(!quantity){
+      return false;
+    }
+    try {
+      const cart = await CartModel.findOne({_id: cId});
+      if(!cart){
+        return false;
+      }
+      const product = cart.products.find(product => product.product.toString() === pId);
+      if(!product){
+        return false;
+      }
+      product.quantity = quantity;
+      await cart.save();
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
     }
   }
 

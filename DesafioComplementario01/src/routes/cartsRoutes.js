@@ -4,42 +4,6 @@ import { CartMongoManager } from "../dao/managerDB/CartMongoManager.js"
 
 const cartRouter = Router()
 
-// ** Métodos  con file system
-// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-// =-            F I L E   S Y S T E M            -=
-// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=`
-
-/*
-const path="./src/json/carritos.json"
-
-cartRoutes.get("/", async (req, res) => {
-  const carts = new CartManager(path)
-  const resultado = await carts.getCarts()
-  res.send(resultado)
-})
-
-cartRoutes.get("/:cId", async (req, res) => {
-  const {cId}=req.params
-  const carts = new CartManager(path)
-  const resultado = await carts.getProductsCartById(+cId)
-  res.send(resultado)
-})
-
-cartRoutes.post("/", async (req, res) => {
-  const carts = new CartManager(path)
-  const resultado = await carts.addCart()
-  res.send({ message: resultado })
-})
-
-cartRoutes.post("/:cId/product/:pId", async (req, res) => {
-  const {cId, pId} = req.params
-  const carts = new CartManager(path)
-  const resultado = await carts.addProductsInCart(cId,pId,1)
-  res.send({ message: resultado})
-})
-
-*/
-
 // ** Métodos con Mongoose
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // =-                M O N G O O  D B             -=
@@ -86,6 +50,7 @@ cartRouter.get("/:cId", async (req, res) => {
 })
 
 cartRouter.post('/', async (req,res)=>{ 
+  
   try{
     const carts = new CartMongoManager()
     const resultado = await carts.addCart({products:[]})  
@@ -100,11 +65,13 @@ cartRouter.post('/', async (req,res)=>{
 })
 
 cartRouter.post("/:cId/product/:pId",async (req,res)=>{
+
+  console.log('Hola mundo');
   try{
     const {cId, pId} = req.params
     const newQuantity =  req.body.quantity
     const carts = new CartMongoManager()
-
+    console.log({cId, pId, newQuantity});
     const resultado = await carts.addProductsInCart(cId, pId, newQuantity)
 
     if (resultado.message==="OK"){
@@ -122,17 +89,65 @@ cartRouter.delete('/:cId',async (req,res)=>{
     const {cId} = req.params
     const carts = new CartMongoManager()
 
-    const deleted = await carts.deleteProduct(cId)
+    const deleted = await carts.deleteAllProductsInCart(cId);
 
-    if (deleted.message==="OK")
-      return res.status(200).json(deleted.rdo)
+    if (deleted)
+      return res.status(200).json({message: 'Products deleted'});
 
-    return res.status(404).json(deleted.rdo)
+    return res.status(404).json({menssage: 'could not delete products'});
   }
   catch(err){
     res.status(400).json({menssage: err})
   }
 })
 
+cartRouter.delete('/:cId/products/:pId', async (req, res) => {
+  const { cId, pId } = req.params;
+  const cartManager = new CartMongoManager();
+  try {
+    const result = await cartManager.deleteProductInCart(cId, pId);
+    if(result){
+      res.send({message: 'Product deleted'});
+    }
+    else{
+      res.status(400).json({message: 'could not delete product'});
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({message: 'could not delete product'});
+  }
+});
+
+
+cartRouter.put('/:cId', async (req, res) => {
+  const cartManager = new CartMongoManager();
+  const { cId } = req.params;
+  const cart = req.body;
+  try {
+    const result = await cartManager.updateCart(cId, cart);
+    if(result.modifiedCount > 0){
+      res.send({message: 'Cart updated'});
+    }
+    else{
+      res.status(400).send({message: 'Could not update cart'});
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(400).send({message: 'Could not update cart'});
+  }
+});
+
+cartRouter.put('/:cId/products/:pId', async (req, res) => {
+  const { cId, pId } = req.params;
+  const { quantity } = req.body;
+  const cartManager = new CartMongoManager();
+  const result = await cartManager.updateProductInCart(cId, pId, quantity);
+  if(result){
+    res.send({message: 'Product updated'});
+  }
+  else{
+    res.status(400).send({message: 'could not update product'});
+  }
+});
 
 export default cartRouter

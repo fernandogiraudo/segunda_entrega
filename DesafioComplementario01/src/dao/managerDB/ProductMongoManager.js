@@ -1,4 +1,4 @@
-import ProductModel from "../models/products.model.js"
+import { ProductsModel } from "../models/products.model.js"
 
 export class Producto {
   constructor(title, description, price, code, stock, status, category, thunbnail) {
@@ -14,10 +14,18 @@ export class Producto {
 }
 
 export class ProductMongoManager {
-  async getProducts() {
+  async getProducts(limit = 10, page = 1, query = '', sort = '') {
     try {
-      const parseProductos = await ProductModel.find().lean()
-      return {message: "OK" , rdo: parseProductos}
+      const [code, value] = query.split(':');
+  
+      const parseProductos = await ProductsModel.paginate({[code] : value}, {
+        limit,
+        page,
+        sort : sort ? {price: sort} : {}
+      });
+      parseProductos.payload = parseProductos.docs;
+      delete parseProductos.docs;
+      return {message: "OK" , ...parseProductos}
     } catch (e) {
       return {message: "ERROR" , rdo: "No hay productos"}
    }

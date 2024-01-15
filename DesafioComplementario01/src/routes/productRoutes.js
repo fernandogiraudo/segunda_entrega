@@ -6,55 +6,6 @@ import {uploader} from '../utils/multer.js'
 
 const productRouter = Router()
 
-// ** Métodos  con file system
-// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-// =-            F I L E   S Y S T E M            -=
-// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=`
-
-/*
-const path="./src/json/productos.json"
-
-productRouter.get("/", async (req, res) => {
-  const { limit } = req.query
-  const products = new ProductManager(path)
-  let resultado = await products.getProducts()
-  //Si no tiene limite, devuelve todos los productos
-  if (!limit) 
-    return res.send(resultado)
-  const productsLimit = resultado.slice(0, limit)
-  res.send(productsLimit)
-})
-
-productRouter.get("/:pId", async (req, res) => {
-  const { pId } = req.params
-  const products = new ProductManager(path)
-  const resultado = await products.getProductById(+pId)
-  res.send(resultado)
-})
-
-productRouter.post("/", async (req, res) => {
-  const product = req.body
-  const products = new ProductManager(path)
-  const resultado = await products.addProduct(product)
-  res.send({ message: resultado })
-})
-
-productRouter.put("/:pId", async (req, res) => {
-  const { pId } = req.params
-  const product = req.body
-  const products = new ProductManager(path)
-  const resultado = await products.updateProduct(+pId,product)
-  res.send({ message: resultado })
-})
-
-productRouter.delete("/:pId", async (req, res) => {
-  const { pId } = req.params
-  const products = new ProductManager(path)
-  const resultado = await products.deleteProduct(+pId)
-  res.send({ message: resultado })
-})
-*/
-
 // ** Métodos con Mongoose
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // =-                M O N G O O  D B             -=
@@ -62,23 +13,19 @@ productRouter.delete("/:pId", async (req, res) => {
 
 productRouter.get("/", async (req, res) => {
   try {
-    const { limit } = req.query
+    const { limit = 10, page = 1, query = '', sort = '' } = req.query;
     const products = new ProductMongoManager()
 
-    const resultado = await products.getProducts()
-
-    if (resultado.message==="OK")
-    {
-      //Si no tiene limite, devuelve todos los productos
-      if (!limit) 
-        return res.status(200).json(resultado)
-
-      const productsLimit = resultado.rdo.slice(0, limit)
-      return res.status(200).json(productsLimit)
+    const resultado = await products.getProducts(limit, page, query, sort);
+    if(resultado){
+      res.send(resultado);
     }
-    res.status(400).json(resultado)
+    else{
+      res.status(400).json({message: 'Not found'})
+    }
   } 
   catch (err) {
+    console.log({err});
     res.status(400).json({ message: "Error al obtener los productos" + err.menssage })
   }
 })

@@ -29,8 +29,13 @@ app.use(express.static('public'))
 mongoose.connect("mongodb+srv://sergiocupe:Coder2024@coder.0nonzsv.mongodb.net/ecommerce")
 
 //*************** CONFIGURACION HANDLEBARS **************/
+const hbs = handlebars.create({
+  runtimeOptions: {
+      allowProtoPropertiesByDefault: true
+  }
+});
 
-app.engine('handlebars',handlebars.engine()) 
+app.engine('handlebars',hbs.engine) 
 app.set('views','src/views')
 app.set('view engine', 'handlebars')
 app.use('/', viewRoutes) //Configuracion de las vistas handlebars
