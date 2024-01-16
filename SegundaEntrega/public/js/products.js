@@ -11,7 +11,7 @@ const addProductToCart = async (pId) => {
                'Content-Type': 'application/json' 
             }
         });
-        if(result){
+        if(result.status === 200 || result.status === 201){
             alert('Se agregó correctamente');
         }
         else{

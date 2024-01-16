@@ -72,15 +72,15 @@ cartRouter.post("/:cId/product/:pId",async (req,res)=>{
     const newQuantity =  req.body.quantity
     const carts = new CartMongoManager()
     console.log({cId, pId, newQuantity});
-    const resultado = await carts.addProductsInCart(cId, pId, newQuantity)
+    const result = await carts.addProductsInCart(cId, pId, newQuantity)
 
-    if (resultado.message==="OK"){
-      return res.status(200).json(resultado)
+    if (result){
+      return res.status(200).json({message: 'Product added'});
     }
-    res.status(400).json(resultado)
+    res.status(400).json({message: 'could not add product'});
   }
   catch(err){
-    res.status(400).json({menssage: 'err'})
+    res.status(400).send({err});
   }
 })
 

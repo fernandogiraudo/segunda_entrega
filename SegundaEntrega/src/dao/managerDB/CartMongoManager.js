@@ -55,17 +55,24 @@ export class CartMongoManager {
 
   async addProductsInCart(cId, pId, quantity) {
     try {
-      console.log('Hola mundo!!')
-      const cart = await CartModel.updateOne({_id: cId}, {
-        products: [
-          {
-            product: pId,
-            quantity
-          }
-        ]
-      })
+      const cart = await CartModel.findOne({_id: cId});
+      if(cart){
+        const existingProducts = cart.products.find(product => product.product.toString() === pId);
+        if(existingProducts){
+          existingProducts.quantity += quantity;
+        }
+        else{
+          cart.products.push({product: pId, quantity});
+        }
+        await cart.save();
+        return true;
+      }
+      else{
+        return false;
+      }
     } catch (e) {
-      return {message: "ERROR" , rdo: "Error al momento de actualizar el carrito - "+ e.message}    }
+      return false;
+    }
   }
 
   async addCart(products) {
